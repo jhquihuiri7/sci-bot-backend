@@ -1,0 +1,15 @@
+runtime: python311  # Usa la versión compatible con tu proyecto
+
+entrypoint: gunicorn -b :$PORT scibot.wsgi
+
+env_variables:
+  DJANGO_SETTINGS_MODULE: "scibot.settings"
+  SECRET_KEY: "reemplaza_esto_con_tu_clave_segura"
+  DEBUG: "False"
+
+handlers:
+- url: /static
+  static_dir: static/
+
+- url: /.*
+  script: auto
