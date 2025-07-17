@@ -2,3 +2,4 @@ venv/
 _pycache/
 db.sqlite3
 .env
+scibot-backend-b5fd3808c145.json

@@ -24,6 +24,7 @@ load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-_13^gf@(9v57mvyj)6fms69liv0hmf4nrp6#dimwn8f32=b)8u'
 MODEL_TOKEN = os.getenv("modeltoken")
+OPEN_TOKEN = os.getenv("opentoken")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
