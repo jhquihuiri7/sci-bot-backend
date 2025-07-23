@@ -5,6 +5,7 @@ from google.cloud import vision
 import json
 import re
 import uuid
+import torch
 
 SUMMARY_RATIO = 0.1
 BUCKET_NAME = "scibot-backend"
@@ -125,13 +126,11 @@ def summarize_data(text, model):
     try:
         response = scibert_model.client.chat.completions.create(
         ##response = scibert_model.client.complete(
-            messages=[
-                SystemMessage(""),
-                UserMessage(f"{base_prompt}: {text}"),
-            ],
+            messages=[{"role": "user", "content": f"{base_prompt}: {text}"}],
             temperature=0.7,
             top_p=1,
-            model=model
+            model=model,
+            timeout=600
         )
 
         summary = response.choices[0].message.content
@@ -142,7 +141,7 @@ def summarize_data(text, model):
         return extract_error_message(str(e))
     
 
-def answer_question(history, question, model):
+def answer_question(history, question, model="mistralai/mistral-nemo:free"):
     base_prompt = '''
     Eres experto respondiendo preguntas únicamente sobre el texto que generaste el resumen.
     Debes responder preguntas únicamente del texto que se te proporcionó. 
@@ -172,4 +171,27 @@ def answer_question(history, question, model):
         print(e)
         return parse_error(str(e))
 
-    
+
+def use_mt5_model(texto, max_tokens=384):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    entrada = scibert_model.custom_tokenizer(
+        "summarize: " + texto,
+        return_tensors="pt",
+        truncation=True,
+        padding="max_length",
+        max_length=1024
+    ).to(device)
+
+    with torch.no_grad():
+        salida = scibert_model.custom_model.generate(
+            input_ids=entrada["input_ids"],
+            attention_mask=entrada["attention_mask"],
+            max_length=max_tokens,
+            min_length=32,               # asegura mínimo de longitud
+            num_beams=4,                 # mejora coherencia
+            repetition_penalty=2.0,      # evita repeticiones
+            length_penalty=1.0,
+            early_stopping=True
+        )
+    resumen = scibert_model.custom_tokenizer.decode(salida[0], skip_special_tokens=False)
+    return resumen

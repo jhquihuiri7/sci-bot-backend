@@ -30,12 +30,16 @@ def loadPdf(request):
         
         session_id = uuid.uuid4()
         data = utils.cleanPdf(data)
-        response = utils.summarize_data(data, model)
-
+        summary = ""
+        if model == "mt5-small":
+            response = utils.use_mt5_model(data)
+            summary = response
+        else:
+            response = utils.summarize_data(data, model)
+            summary = response["summary"]
         if 'error' in response:
             return JsonResponse({"error" :response["error"]}, status=400)
         
-        summary = response["summary"]
         Conversation.objects.create(
             session_id=session_id,
             user_message=data,
@@ -75,7 +79,10 @@ def chat(request):
         except:
             return JsonResponse({"error": "No se pudo cargar historial. Intente de nuevo"}, status=400)
 
-        response = utils.answer_question(data, user_message, model)
+        if model == "mt5-small":
+            response = utils.answer_question(data, user_message)
+        else:
+            response = utils.answer_question(data, user_message, model)
 
         if 'error' in response:
             return JsonResponse({"error" :response["error"]}, status=400)
