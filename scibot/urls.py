@@ -1,25 +1,35 @@
-"""
-URL configuration for scibot project.
+# -*- coding: utf-8 -*-
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path
-from pdf.views import *
+Configuración de URL para el proyecto scibot.
 
+Este archivo es el enrutador principal del proyecto Django. Mapea las rutas de URL
+a las funciones de vista (views) que manejan las solicitudes HTTP.
+
+Para más información, consulta la documentación de Django sobre URLs:
+https://docs.djangoproject.com/en/5.2/topics/http/urls/
+"""
+
+# --- Importaciones de Django y de la aplicación ---
+from django.contrib import admin  # Módulo de administración de Django.
+from django.urls import path  # Función para definir rutas de URL.
+from pdf.views import loadPdf, chat  # Importa las vistas específicas de la aplicación 'pdf'.
+
+# --- Lista de Patrones de URL (urlpatterns) ---
+# Esta lista contiene todas las rutas de URL que la aplicación reconocerá.
+# Django procesa esta lista en orden y utiliza la primera coincidencia que encuentra.
 urlpatterns = [
+    # URL para la interfaz de administración de Django.
+    # Ejemplo: http://127.0.0.1:8000/admin/
     path('admin/', admin.site.urls),
+
+    # URL para la vista `loadPdf`. Esta vista maneja la carga y el procesamiento
+    # inicial de los archivos PDF.
+    # Ejemplo: http://127.0.0.1:8000/load
     path('load', loadPdf),
+
+    # URL para la vista `chat`. Esta vista maneja la conversación interactiva
+    # después de que un PDF ha sido procesado.
+    # Ejemplo: http://127.0.0.1:8000/chat
     path('chat', chat)
 ]
