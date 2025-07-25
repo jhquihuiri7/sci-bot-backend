@@ -181,6 +181,8 @@ def summarize_data(text, model):
     base_prompt = '''
     Como sistema de IA, asegúrese de que sus respuestas sean imparciales, éticas y cumplan con las regulaciones de la IA.
     Eres un científico experto que puede generar resúmenes con ideas clave claras y concisas sobre un tema específico. Se te entrega un trabajo de tesis universitario de Ecuador que puede ser de diversas áreas de ciencias. Debes realizar un resumen de una extensión de 500 palabras del artículo. El contenido debe ser formal, instructivo y la estructura del resumen debe ser en ideas principales, con palabras clave.
+    Por favor, responde únicamente en formato Markdown plano y válido, sin usar HTML ni etiquetas especiales. No incluyas código HTML embebido, solo Markdown estándar compatible con Streamlit (como títulos, listas, tablas, enlaces, bloques de código, etc.). Evita también caracteres especiales no renderizables.
+    Tu respuesta será mostrada directamente en una aplicación de Streamlit, así que asegúrate de que el Markdown sea limpio, simple y correctamente estructurado.
     '''
     print(model)
     
@@ -193,7 +195,7 @@ def summarize_data(text, model):
             model=model,
             timeout=600
         )
-        summary = response.choices[0].message.content
+        summary = remove_think_tags(response.choices[0].message.content)
         return {"summary": summary}
     except Exception as e:
         print(e)
@@ -213,6 +215,8 @@ def answer_question(history, question, model="mistralai/mistral-nemo:free"):
     Eres experto respondiendo preguntas únicamente sobre el texto que generaste el resumen.
     Debes responder preguntas únicamente del texto que se te proporcionó. 
     El contenido de las respuestas debe ser formal, instructivo y la estructura de las respuestas debe ser en ideas claras y clave con una extensión de 100 palabras.
+    Por favor, responde únicamente en formato Markdown plano y válido, sin usar HTML ni etiquetas especiales. No incluyas código HTML embebido, solo Markdown estándar compatible con Streamlit (como títulos, listas, tablas, enlaces, bloques de código, etc.). Evita también caracteres especiales no renderizables.
+    Tu respuesta será mostrada directamente en una aplicación de Streamlit, así que asegúrate de que el Markdown sea limpio, simple y correctamente estructurado.
     '''
 
     # Construye el historial de mensajes para el modelo.
@@ -231,7 +235,7 @@ def answer_question(history, question, model="mistralai/mistral-nemo:free"):
             top_p=1,
             model=model,
         )
-        answer = response.choices[0].message.content
+        answer = remove_think_tags(response.choices[0].message.content)
         print(answer)
         return {"answer": answer}
     except Exception as e:
@@ -274,4 +278,30 @@ def use_mt5_model(texto, max_tokens=384):
 
     # Decodifica la salida para obtener el texto del resumen.
     resumen = scibert_model.custom_tokenizer.decode(salida[0], skip_special_tokens=False)
+    resumen = remove_think_tags(resumen)
     return resumen
+
+def remove_think_tags(text):
+    """
+    Limpia un texto eliminando secciones no deseadas:
+    1. Bloques entre ⭁think▷ y ⭁/think▷.
+    2. Etiquetas tipo <...>.
+    3. Delimitadores de bloque de código Markdown.
+    Finalmente, antepone un salto de línea al texto limpio.
+    """
+
+    # 1. Elimina todo el contenido entre ⭁think▷ y ⭁/think▷ (incluidas las marcas).
+    pattern = r"\u25c1think\u25b7.*?\u25c1/think\u25b7"
+    cleaned_text = re.sub(pattern, "", text, flags=re.DOTALL)
+
+    # 2. Elimina cualquier etiqueta que esté entre signos <...>, incluyendo los signos.
+    cleaned_text = re.sub(r"<[^>]*>", "", cleaned_text)
+
+    # 3. Elimina los delimitadores de bloque de código Markdown: ```markdown\n y \n```
+    text = text.replace("```markdown\n", "")
+    text = text.replace("\n```", "")
+
+    # 4. Agrega un salto de línea al inicio del texto limpio, asegurando buena visualización en Markdown.
+    cleaned_text = "\n" + cleaned_text.strip()
+
+    return cleaned_text
